@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import os
 
 def main():
     session = fastf1.get_session(2023, "Australia", "R")
@@ -40,6 +41,7 @@ def main():
     print(results)
     print(comparison)
     
+os.makedirs("cache", exist_ok=True)
 fastf1.Cache.enable_cache("cache")
 
 def get_driver_laps(name, session):
