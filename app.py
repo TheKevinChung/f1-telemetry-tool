@@ -25,7 +25,7 @@ st.markdown("<p style='text-align: center; color: grey;'>Compare two drivers fro
 year_of_race = st.selectbox("Year of Race", year, index = None, placeholder = "Choose a Year")
 
 if year_of_race:
-    schedule = fastf1.get_event_schedule(int(year_of_race))
+    schedule = fastf1.get_event_schedule(int(year_of_race), include_testing = False)
     all_races = list(schedule["Country"])
     race = st.selectbox("What Race?", all_races, index = None, placeholder = "Choose a Race")
 
