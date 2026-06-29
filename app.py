@@ -1,8 +1,9 @@
 import fastf1
 import streamlit as st
 import pandas as pd
-from project import fastest_lap, delta, get_driver_laps, clean_data, fit, compare
+from project import fastest_lap, delta, get_driver_laps, clean_data, fit, compare, brake_detect, brake_delta
 import plotly.graph_objects as go
+import numpy as np
 
 st.set_page_config(layout="wide")
 
@@ -89,3 +90,20 @@ if year_of_race:
                     st.info("These two drivers share no tire compounds to compare in this race.")
             except Exception:
                 st.error("No Data to Compare Tire Degradation!")
+            if driver1 and driver2:
+                try:
+                    zones = brake_detect(driver1, session)
+                    corners = brake_delta(zones, grid1[:-1], change)
+                    st.header("Braking Zone Analysis")
+                    st.caption(f"Time gained or lost through each braking zone. A positive value means {driver1} gained time on {driver2} through that zone; negative means {driver2} gained. Braking zones are detected from {driver1}'s fastest lap.")
+                    rows = []
+                    for zone, time_change in corners:
+                        rows.append({
+                            "Breaking Zone (m)": f"{round(zone[0])} - {round(zone[1])}",
+                            "Time Change (s)": round(time_change, 3)
+                        })
+                    table = pd.DataFrame(rows)
+                    st.dataframe(table, use_container_width = True, hide_index = True)
+
+                except Exception:
+                    st.error("Braking zone analysis could not be generated for these drivers!")

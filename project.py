@@ -31,6 +31,8 @@ def main():
     grid, interpolated = fastest_lap(driver_find, session)
     grid2, interpolated2 = fastest_lap(driver_find2, session)
     gap = delta(grid, interpolated, interpolated2)
+    zones = brake_detect(driver_find, session)
+    corners = brake_delta(zones, grid[:-1], gap)
     empty = go.Figure()
     empty.add_trace(go.Scatter(x = grid, y = interpolated, name = driver_find))
     empty.add_trace(go.Scatter(x = grid2, y = interpolated2, name = driver_find2))
@@ -38,8 +40,11 @@ def main():
     empty2 = go.Figure()
     empty2.add_trace(go.Scatter(x = grid[:-1], y = gap, name = "Delta of the Two Drivers"))
     empty2.show()
+    brake_result = brake_detect("VER", session)
+    print(brake_result)
     print(results)
     print(comparison)
+    print(corners)
     
 os.makedirs("cache", exist_ok=True)
 fastf1.Cache.enable_cache("cache")
@@ -101,6 +106,37 @@ def delta(grid, speed1, speed2):
     difference = segment - segment2
     overall = np.cumsum(difference)
     return overall
+
+def brake_detect(driver_find, session):
+    best_lap = session.laps.pick_driver(driver_find).pick_fastest()
+    telemetry = best_lap.get_telemetry()
+    specific = telemetry[["Brake", "Distance"]]
+    zones = []
+    previous = False
+    brake_start = None
+    for i in range(len(specific)):
+        value = specific["Brake"].iloc[i]
+        distance = specific["Distance"].iloc[i]
+        if value == True and previous == False:
+            brake_start = distance
+        if value == False and previous == True:
+            zones.append((brake_start, distance))
+        previous = value
+    return zones
+
+def brake_delta(zones, grid, delta):
+    results = []
+    for zone in zones:
+        start = zone[0]
+        end = zone[1]
+        start_index = np.argmin(np.abs(grid - start))
+        end_index = np.argmin(np.abs(grid - end))
+        time_change = delta[end_index] - delta[start_index]
+        results.append((zone, time_change))
+    return results
+
+
+        
 
 if __name__ == "__main__":
     main()
